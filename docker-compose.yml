@@ -27,6 +27,35 @@ services:
     networks:
       - main
     restart: always
+  worker:
+    build: .
+    command: sh -c "cd src/ && celery -A config worker --loglevel=info"
+    volumes:
+      - .:/src
+    depends_on:
+      - rabbitmq
+    networks:
+      - main
+    restart: always
+  beat:
+    build: .
+    command: sh -c  "cd src/ && celery -A config beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler"
+    volumes:
+      - .:/src
+    networks:
+      - main
+    restart: always
+  rabbitmq:
+    image: public.ecr.aws/docker/library/rabbitmq:3.11.26-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - main
+    restart: always
+    environment:
+      - "RABBITMQ_DEFAULT_USER=guest"
+      - "RABBITMQ_DEFAULT_PASS=guest"
 
 #  nginx:
 #    container_name: tavan7nginx
